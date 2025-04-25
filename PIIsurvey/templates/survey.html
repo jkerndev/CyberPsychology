@@ -19,6 +19,9 @@
             <!-- Answer Input -->
             <input type="text" id="answer" name="answer" class="w-full border rounded-lg p-3 text-lg" placeholder="Type your answer here...">
 
+            <!-- Inside the <form id="survey-form"> -->
+            <input type="hidden" id="bypass" name="bypass" value="false">
+
             <!-- Hide text checkbox -->
             <label class="flex items-center mt-3 cursor-pointer">
                 <input type="checkbox" id="toggle-hide" class="mr-2">
@@ -38,12 +41,29 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </div>
+            <!-- New "Skip to End" Button -->
+            <div class="mt-4">
+                <button type="submit" name="skip_all" 
+                        onclick="return confirm('Are you sure you want to skip all remaining questions and go directly to the results?');"
+                        class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600">
+                Skip all remaining questions
+                </button>
+            </div>
+
+            <!-- Bypass Button Container -->
+            <div id="bypass-container" class="hidden mt-4 text-center">
+                <button type="button" id="bypass-button" 
+                        class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    I answered correctly. Go to the next question.
+                </button>
+            </div>
         </form>
 
         <!-- Loading Indicator -->
-        <div id="loading" class="text-gray-600 text-center mt-4 hidden">
-            <div class="spinner mx-auto"></div>
-            <p>Processing...</p>
+        <div id="loading" class="hidden flex items-center justify-center space-x-2 mt-4">
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-200"></div>
+            <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-400"></div>
         </div>
 
     </div>
@@ -59,6 +79,15 @@
     </div>
 
     <script>
+        // Global counter for header resets
+        let headerResetCount = 0;
+
+        document.getElementById("survey-form").addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+                event.preventDefault();
+            }
+        });
+
         // Toggle password visibility
         document.getElementById("toggle-hide").addEventListener("change", function() {
             let answerField = document.getElementById("answer");
@@ -74,9 +103,13 @@
             // Detect which button was clicked
             let submitButton = document.activeElement;  
             console.log(event.submitter);
+            // Detect which button was clicked using event.submitter
             if (event.submitter && event.submitter.name === "skip_next") {
-                formData.append("skip_next", "true");  // Mark as skipped
+                formData.append("skip_next", "true");  // Mark as skipped for this question
+            } else if (event.submitter && event.submitter.name === "skip_all") {
+                formData.append("skip_all", "true");   // Mark that the user wants to skip to the end
             }
+
 
             document.getElementById("loading").classList.remove("hidden");
             
@@ -93,16 +126,26 @@
 
             if (contentType && contentType.includes("application/json")) {
                 let data = await response.json();
-                document.getElementById("loading").classList.add("hidden");
 
                 if (data.new_prompt) {
-                    let header = document.getElementById('question-text')
-                    header.textContent = ''
-                    showTypingEffect(header, data.new_prompt);
+                    document.getElementById("loading").classList.add("hidden");
+
+                    let header = document.getElementById('question-text');
+                    header.textContent = '';
+                    headerResetCount++;
+                    if (headerResetCount >= 2) {
+                        document.getElementById("bypass-container").classList.remove("hidden");
+                    }
+                    if (data.ai_ver) {
+                        showTypingEffect(header, data.new_prompt);
+                    } else {
+                        header.textContent = data.new_prompt;
+                    }
                 } else if (data.next_url) {
-                    window.location.href = data.next_url;  // Move to next question
+                    // Leave the loading spinner visible while navigating
+                    window.location.href = data.next_url;
                 } else {
-                    // If it's not JSON (e.g., a normal redirect), do a full page reload
+                    // Fallback in case next_url is not present
                     window.location.href = this.action;
                 }
             }
@@ -117,6 +160,8 @@
 
         function showTypingEffect(element, text) {
             element.innerHTML = "";
+            headerResetCount++;
+
             let index = 0;
             function type() {
                 if (index < text.length) {
@@ -127,6 +172,22 @@
             }
             type();
         }
+
+        // Attach event listener to the bypass button
+        document.getElementById("bypass-button").addEventListener("click", function() {
+            // Reset the header counter for the next question
+            headerResetCount = 0;
+
+            // Set the bypass flag so the backend logs it
+            document.getElementById("bypass").value = "true";
+
+            // Hide the bypass container again
+            document.getElementById("bypass-container").classList.add("hidden");
+
+            // Submit the form (which will go to the next question properly)
+            document.getElementById("survey-form").requestSubmit();
+        });
+
     </script>
 </body>
 </html>

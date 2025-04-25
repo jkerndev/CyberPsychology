@@ -8,9 +8,10 @@ db = SQLAlchemy()
 class Participant(db.Model):
     __tablename__ = "participant_table"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)  # Student ID (900 number)
-    datetime_taken: Mapped[DateTime] = mapped_column(DateTime, default=datetime.datetime.utcnow, primary_key=True)
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, autoincrement=False)  # Student ID (900 number) hashed
+    datetime_taken: Mapped[DateTime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
     major: Mapped[str] = mapped_column(String, nullable=False)
+    is_ai: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     responses: Mapped[list["Response"]] = relationship("Response", back_populates="participant_id_rel", cascade="all, delete-orphan")
 
@@ -27,10 +28,11 @@ class Response(db.Model):
     __tablename__ = "response_table"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, unique=True)
-    participant_id: Mapped[int] = mapped_column(Integer, ForeignKey("participant_table.id"))
+    participant_id: Mapped[str] = mapped_column(String, ForeignKey("participant_table.id"))
     question_id: Mapped[int] = mapped_column(Integer, ForeignKey("question_table.id"))
     answered: Mapped[bool] = mapped_column(Boolean, nullable=False)
     skipped: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    skip_alled: Mapped[bool] = mapped_column(Boolean, nullable=False)
     conversation: Mapped[str] = mapped_column(Text, nullable=True) 
     
     participant_id_rel: Mapped["Participant"] = relationship("Participant")

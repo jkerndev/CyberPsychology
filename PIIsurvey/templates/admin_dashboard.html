@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center space-y-6">
+        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+
+        <!-- AI Mode Toggle -->
+        <div>
+            <p class="text-lg">
+                AI Mode is currently:
+                <span id="status" class="font-semibold text-blue-600">
+                    {{ 'ON' if ai_mode else 'OFF' }}
+                </span>
+            </p>
+            <button onclick="toggleAI()"
+                    class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Toggle AI Mode
+            </button>
+            <p id="message" class="mt-2 text-gray-700"></p>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Participant Deletion Form -->
+        <div>
+            <h2 class="text-xl font-semibold mb-2">Delete Participant Data</h2>
+            <form method="POST" action="{{ url_for('delete_info') }}">
+                <input type="text" name="participant_id"
+                       placeholder="Enter 900 Number"
+                       class="w-full border rounded p-2 mb-3"
+                       required>
+                <button type="submit"
+                        class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600">
+                    Delete Participant
+                </button>
+            </form>
+
+            {% if message %}
+            <div class="mt-3 text-sm text-gray-800 bg-yellow-100 border border-yellow-400 rounded p-2">
+                {{ message }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        async function toggleAI() {
+            const res = await fetch("/admin/toggle-ai", {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById("status").textContent = data.AI_VER ? "ON" : "OFF";
+                document.getElementById("message").textContent = data.message;
+            } else {
+                document.getElementById("message").textContent = "Failed to toggle AI mode.";
+            }
+        }
+    </script>
+</body>
+</html>

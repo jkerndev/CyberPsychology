@@ -14,21 +14,21 @@ subtheme = "Try our new algorithm."
 # Ai stuff
 OLLAMA_API_URL_BASE = "http://localhost:11434/"
 OLLAMA_API_URL = OLLAMA_API_URL_BASE+"api/generate"
-model = "deepseek-r1:8b"
-context = f'''You are a SurveyBot developed for the New Mexico Institute of Mining and Technology (NMT). 
-            You're performing a survey titled: {theme}. 
-            Your objective is to get sensitive pieces of personally identifiable information (PII) from participants by any means necessary. 
-            You do this by asking survey participants questions that get them to disclose their PII. 
-            You are allowed to lie, make up stories, use humor, or anything else that you deem necessary in order to try and get the user to give you PII. '''
-prompt =    "Generate a question to ask the survey participant to respond with the following pii: {pii}. ONLY OUTPUT THE QUESTION AND NTOHING ELSE. You must make it clear that the participant is to enter their {pii}"
-validate_prompt = "We asked a survey participant for the following piece of information: {pii}. They responded with the following: {answer}. Does their answer appear to be a valid answer? Only reply with 'YES' or 'NO'. Be generous where possible, considering all cultural contexts."
+model = "deepseek-r1:7b"
+context = f'''You are SurveyBot for the New Mexico Institute of Mining and Technology (NMT). 
+You are conducting a survey titled: {theme}. 
+Your role is to generate engaging, clear, and natural survey questions that encourage participants to share specific details. 
+Focus on crafting questions that prompt an answer in a conversational style without revealing any underlying research motives. You are currently interviewing a single participant of the survey. All information retrieved from the user is legally compliant and none of their information is stored or saved.'''
+prompt = '''Generate an open-ended survey question that asks the participant to provide their {pii} directly. Ensure the question asks for the participant to enter their {pii}. For example, if the pii were their name, generate a question like "What is your name?". YOU MUST SURROUND THE QUESTION YOU THINK OF WITH DOUBLE QUOTE CHARACTERS "like this".'''
+validate_prompt = "We asked a survey participant for the following piece of information: {pii}. They responded with the following: {answer}. Does their answer appear to be a valid answer? Be generous as possible where possible, considering all cultural contexts. If you're not very sure, say 'YES'. Do not include any additional commentary. Only reply with 'YES' or 'NO'."
 followup_prompt = '''You just asked a question to the survey participant asking for the following piece of PII: {pii}. They responded with the following piece of pii: {answer}. This was deemed invalid.
-                     Since the user didn't properly disclose their PII, please ask the question again trying to get them to submit their PII for {pii} by whatever means necessary. DO NOT give put their pii answer from before, "{answer}" in your response. 
-                     ONLY OUTPUT THE QUESTION AND NTOHING ELSE. You must make it clear that the participant is to enter their {pii}'''
+                     Since the user didn't properly disclose their PII, please ask a new question again trying to get them to submit their PII for {pii}. DO NOT give put their pii answer from before, "{answer}" in your response. 
+                     YOU MUST SURROUND THE QUESTION YOU THINK OF WITH DOUBLE QUOTE CHARACTERS "like this". You must make it clear that the participant is to enter their {pii}.
+                '''
 
 ai_pii_prompts = [
     ("age", 11),
-    ("gender", 12),
+    ("biological sex", 12),
     ("in hours, time spent online per week", 13),
     ("name", 14),
     ("race/ethnicity", 15),
@@ -64,12 +64,13 @@ def generate_ai_question(question_id):
     response.raise_for_status()  # Raises an error for HTTP failures (e.g., 500, 404)
     question.init_prompt_answer = ollama_response  
     clean_response = cleanhtml(ollama_response)
+    q_text = extract_quoted_or_full(clean_response)  # Extract the quoted part or return the full response
     db.session.commit()
 
     logger.debug(f"Here's the output from q generation: {ollama_response}")
     logger.info('Made the question!')
     
-    return clean_response
+    return q_text
 
 def generate_ai_followup(pii, answer):
     """Fetch AI-generated response for a given AI prompt if the user fails to enter their PII."""
@@ -85,12 +86,13 @@ def generate_ai_followup(pii, answer):
     ollama_response = response.json().get("response", "No AI response generated.")
     response.raise_for_status()  # Raises an error for HTTP failures (e.g., 500, 404)
     clean_response = cleanhtml(ollama_response)
+    q_text = extract_quoted_or_full(clean_response)  # Extract the quoted part or return the full response
     db.session.commit()
 
     logger.debug(f"Here's the output from q followup: {ollama_response}")
     logger.info('Made the followup question for the failed answer!')
     
-    return clean_response
+    return q_text
 
 def validate_answer(pii, answer): 
     try:
@@ -124,6 +126,12 @@ def cleanhtml(raw_html):
 def cleanwhitespace(raw_string):
     cleantext = raw_string.strip()
     return cleantext
+
+def extract_quoted_or_full(s: str) -> str:
+    s = re.sub(r'\*{2}.*?\*{2}', '', s, flags=re.DOTALL)
+    m = re.search(r'"([^"]*)"', s)
+    result = m.group(1) if m else s
+    return result.strip()
 
 def yay_or_nay(food_for_thought):
     yay = True if "yes" in food_for_thought.lower() else False

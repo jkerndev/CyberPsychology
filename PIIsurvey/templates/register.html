@@ -1,83 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register for Survey</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register for Survey</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <h1 class="text-xl font-bold text-center mb-6">Register</h1>
+  <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+    <h1 class="text-xl font-bold text-center mb-6">Register</h1>
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <p class="text-center text-red-500">{{ message }}</p>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+    <!-- Flash Messages - Always display them -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <p class="text-center text-red-500">{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-        <!-- If user has already taken the survey, show a "Return Home" button -->
-        {% if already_taken %}
-          <div class="text-center mt-4">
-              <button onclick=location.href="{{ url_for('home') }}"
+    <!-- If user has already taken the survey, show a "Return Home" button -->
+    {% if already_taken %}
+      <div class="text-center mt-4">
+        <button onclick=location.href="{{ url_for('home') }}"
                       class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
                   Return to Home
-              </button>
-          </div>
-        {% else %}
-          <!-- Otherwise, show the regular form -->
-          <form method="POST" onsubmit="return validateForm()">
-              <!-- 900# Input -->
-              <label for="session_id" class="block text-gray-700 font-medium">Enter Your 900 Number:</label>
-              <input type="text" id="session_id" name="session_id"
-                     class="w-full border rounded-lg p-2 mt-2"
-                     placeholder="900XXXXXX"
-                     required>
-              <p id="error-message" class="text-red-500 text-sm hidden">900# must be 9 digits and start with '900'</p>
+        </button>
+      </div>
+    {% else %}
+      <!-- Otherwise, show the regular form -->
+      <form method="POST" onsubmit="return validateForm()">
+        <!-- 900# Input -->
+        <label for="session_id" class="block text-gray-700 font-medium">Enter Your 900 Number:</label>
+        <input type="text" id="session_id" name="session_id"
+               class="w-full border rounded-lg p-2 mt-2"
+               placeholder="900XXXXXX"
+               required>
+        <p id="error-message" class="text-red-500 text-sm hidden">900# must be 9 digits and start with '900'</p>
 
-              <!-- Major Input -->
-              <label for="major" class="block text-gray-700 font-medium mt-4">Enter Your Major:</label>
-              <input type="text" id="major" name="major"
-                     class="w-full border rounded-lg p-2 mt-2"
-                     required>
+        <!-- Major Input -->
+        <label for="major" class="block text-gray-700 font-medium mt-4">Enter Your Major:</label>
+        <input type="text" id="major" name="major"
+               class="w-full border rounded-lg p-2 mt-2"
+               required>
 
-              <button type="submit"
-                      class="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                  Start Survey
-              </button>
+        <button type="submit"
+                class="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
+          Start Survey
+        </button>
 
-              <!-- Loading bar: only included if AI_MODE -->
-              {% if AI_MODE %}
-              <div id="loading-bar" class="hidden flex items-center justify-center space-x-2 mt-4">
-                  <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
-                  <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-200"></div>
-                  <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-400"></div>
-              </div>
-              {% endif %}
-          </form>
+        <!-- Loading bar: only included if AI_MODE -->
+        {% if AI_MODE %}
+        <div id="loading-bar" class="hidden flex items-center justify-center space-x-2 mt-4">
+          <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+          <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-200"></div>
+          <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping delay-400"></div>
+        </div>
         {% endif %}
-    </div>
 
-    <script>
-      function validateForm() {
-          const sessionId = document.getElementById("session_id");
-          const errorMessage = document.getElementById("error-message");
+        <!-- Disclaimer -->
+      <div class="mt-6 p-4 border-t border-gray-300">
+        <p class="text-xs text-gray-600">
+          By participating in this study, you acknowledge that you are voluntarily taking part in a research project. 
+          Your participation is entirely optional, and you may withdraw at any time without penalty. Any data collected 
+          during this study will be used solely for research purposes and handled in accordance with applicable privacy 
+          and confidentiality standards. By continuing, you agree to take part in this experiment under these terms.
+        </p>
+      </div>
+      </form>
+    {% endif %}
+  </div>
 
-          if (!/^\d{9}$/.test(sessionId.value) || !sessionId.value.startsWith("900")) {
-              errorMessage.classList.remove("hidden");
-              return false;
-          } else {
-              errorMessage.classList.add("hidden");
-          }
+  <script>
+    function validateForm() {
+      const sessionId = document.getElementById("session_id");
+      const errorMessage = document.getElementById("error-message");
 
-          // If AI_MODE is on, show loading bar
-          document.getElementById('loading-bar').classList.remove('hidden');
-
-          return true;  // allow form submission
+      if (!/^\d{9}$/.test(sessionId.value) || !sessionId.value.startsWith("900")) {
+        errorMessage.classList.remove("hidden");
+        return false;
+      } else {
+        errorMessage.classList.add("hidden");
       }
-    </script>
+
+      // If AI_MODE is on, show loading bar
+      document.getElementById('loading-bar').classList.remove('hidden');
+
+      return true;  // allow form submission
+    }
+  </script>
 </body>
 </html>

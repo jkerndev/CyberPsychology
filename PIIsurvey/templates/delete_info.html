@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Participant Info</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-4 text-center">Delete Participant Info</h2>
+        
+        {% if message %}
+            <p class="mb-4 text-center text-blue-600 font-semibold">{{ message }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <label for="participant_id" class="block font-medium text-gray-700">Enter 900# ID to delete:</label>
+            <input type="text" id="participant_id" name="participant_id"
+                   class="w-full mt-2 p-2 border rounded-lg" placeholder="900XXXXXX" required>
+
+            <button type="submit"
+                    class="w-full mt-4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600">
+                Delete Participant
+            </button>
+        </form>
+    </div>
+
+</body>
+</html>
