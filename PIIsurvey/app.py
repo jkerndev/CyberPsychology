@@ -259,7 +259,8 @@ def results():
 
 if __name__ == '__main__':
     app.run(
-        host="10.0.0.1",
+        #host="10.0.0.1",
+        host="127.0.0.1",
         port=5000,
         ssl_context=(
             r"C:\Users\Jason\Documents\Wireguard\ssl cybspsyc\10.0.0.1.pem",
